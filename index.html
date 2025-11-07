@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Система «3 баночки» — v5 (подцели и мини-подцели)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="title"><span class="emoji">🏦</span><h1>Система «3 баночки»</h1></div>
+    <div class="subtitle">Пополнение в выбранную баночку • Подцели с прогрессом • Мини‑подцели</div>
+  </header>
+
+  <main class="container">
+    <section class="panel">
+      <h2>💡 Пополнить баночку</h2>
+      <div class="controls">
+        <label>Сумма (₪):
+          <input id="incomeInput" type="number" min="0" step="0.01" placeholder="Например, 100" />
+        </label>
+        <label>Куда зачислить:
+          <select id="jarSelect">
+            <option value="0">💰 Главная цель</option>
+            <option value="1">💞 Фонд радости</option>
+            <option value="2">🌱 Копилка добра</option>
+          </select>
+        </label>
+        <button id="allocateBtn" class="btn primary">Зачислить</button>
+        <button id="undoBtn" class="btn">Отменить последний</button>
+        <div class="split-col buttons">
+          <button id="resetBtn" class="btn danger">Сбросить всё</button>
+          <button id="exportBtn" class="btn">Экспорт (.json)</button>
+          <label class="import-label btn">
+            Импорт
+            <input id="importInput" type="file" accept="application/json" hidden />
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="card" id="jar0">
+        <div class="card-head">
+          <div class="left"><span class="emoji">💰</span><h3>Главная цель</h3></div>
+          <div class="right"><span class="muted">свободно:</span> <b><span id="jar0Free">0</span> ₪</b></div>
+        </div>
+        <p class="hints">Подцели: Invest (с мини‑подцелями), Резерв, Дом, Travel 2025–2027 (с мини‑подцелями), Car, «Фонд развития»</p>
+        <div id="subgoals0" class="subgoals"></div>
+        <div class="spend">
+          <input id="spend0Amt" type="number" min="0" step="0.01" placeholder="Списать из свободных ₪" />
+          <input id="spend0Note" type="text" placeholder="Комментарий (необязательно)" />
+          <button id="spend0Btn" class="btn">Списать</button>
+        </div>
+      </article>
+
+      <article class="card" id="jar1">
+        <div class="card-head">
+          <div class="left"><span class="emoji">💞</span><h3>Фонд радости</h3></div>
+          <div class="right"><span class="muted">свободно:</span> <b><span id="jar1Free">0</span> ₪</b></div>
+        </div>
+        <div class="subhead">🧩 Впечатления</div>
+        <div id="subgoals1a" class="subgoals"></div>
+        <div class="subhead">🌷 Себе «в награду»</div>
+        <div id="subgoals1b" class="subgoals"></div>
+        <div class="spend">
+          <input id="spend1Amt" type="number" min="0" step="0.01" placeholder="Списать из свободных ₪" />
+          <input id="spend1Note" type="text" placeholder="На что потратил(а)?" />
+          <button id="spend1Btn" class="btn">Списать</button>
+        </div>
+      </article>
+
+      <article class="card" id="jar2">
+        <div class="card-head">
+          <div class="left"><span class="emoji">🌱</span><h3>Копилка добра</h3></div>
+          <div class="right"><span class="muted">свободно:</span> <b><span id="jar2Free">0</span> ₪</b></div>
+        </div>
+        <div id="subgoals2" class="subgoals"></div>
+        <div class="spend">
+          <input id="spend2Amt" type="number" min="0" step="0.01" placeholder="Списать из свободных ₪" />
+          <input id="spend2Note" type="text" placeholder="Кому помог(ла)?" />
+          <button id="spend2Btn" class="btn">Списать</button>
+        </div>
+      </article>
+    </section>
+
+    <section class="panel">
+      <h2>🧾 История</h2>
+      <div id="history" class="history"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    Данные сохраняются локально (localStorage).
+  </footer>
+
+  <template id="rowTpl">
+    <div class="row">
+      <div class="when"></div>
+      <div class="amount"></div>
+      <div class="split-detail"></div>
+    </div>
+  </template>
+
+  <template id="subgoalGroupTpl">
+    <div class="subgoal group">
+      <div class="sg-top">
+        <div class="sg-name"></div>
+        <div class="sg-badges">
+          <span class="muted">цель:</span> <b class="sg-target">0</b> ₪ • 
+          <span class="muted">накоплено:</span> <b class="sg-saved">0</b> ₪ • 
+          <b class="sg-pct">0%</b>
+        </div>
+      </div>
+      <div class="progress mini"><div class="progress-bar"></div></div>
+      <div class="children"></div>
+    </div>
+  </template>
+
+  <template id="subgoalLeafTpl">
+    <div class="subgoal">
+      <div class="sg-top">
+        <div class="sg-name"></div>
+        <div class="sg-badges">
+          <span class="muted">цель:</span> <b class="sg-target">0</b> ₪ • 
+          <span class="muted">накоплено:</span> <b class="sg-saved">0</b> ₪ • 
+          <b class="sg-pct">0%</b>
+        </div>
+      </div>
+      <div class="progress mini"><div class="progress-bar"></div></div>
+      <div class="sg-actions">
+        <input class="sg-target-input" type="number" min="0" step="0.01" placeholder="Цель, ₪" />
+        <input class="sg-add-amt" type="number" min="0" step="0.01" placeholder="Пополнить из свободных ₪" />
+        <button class="btn sg-add-btn">Пополнить</button>
+        <input class="sg-spend-amt" type="number" min="0" step="0.01" placeholder="Списать из подцели ₪" />
+        <button class="btn sg-spend-btn">Списать</button>
+      </div>
+    </div>
+  </template>
+
+  <script src="style.css"></script>
+  <script src="app.js"></script>
+</body>
+</html>
